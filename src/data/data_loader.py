@@ -4,6 +4,9 @@ from typing import Tuple, List
 from omegaconf import DictConfig
 import tensorflow_datasets as tfds
 import tensorflow as tf
+import numpy as np
+from tqdm import tqdm
+from src.data.utils import pad_or_trim_tensor
 
 def download_dataset(config: DictConfig) -> None:
     """
@@ -87,3 +90,33 @@ def get_class_labels(ds_info: tfds.core.DatasetInfo) -> List[str]:
         # labels[0] might be 'yes', labels[1] -> 'no', etc.
     """
     return ds_info.features["label"].names
+
+
+def dataset_to_numpy(ds: tf.data.Dataset, config: DictConfig) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Convert TFDS dataset to NumPy arrays with padding/trimming and batch-wise iteration.
+
+    Args:
+        ds: tf.data.Dataset yielding (audio, label)
+        config: DictConfig containing audio parameters
+
+    Returns:
+        X: np.ndarray of shape (num_samples, fixed_length)
+        y: np.ndarray of shape (num_samples,)
+    """
+    batch_size = getattr(config, "batch_size", 64) # default batch_size
+
+    ds = ds.map(lambda x, y: (pad_or_trim_tensor(x, config), y))
+    ds = ds.batch(batch_size)
+
+    X_list = []
+    y_list = []
+    
+    for batch_audio, batch_label in tqdm(tfds.as_numpy(ds), desc="Converting ds to np"):
+        X_list.append(batch_audio)
+        y_list.append(batch_label)
+
+    X = np.concatenate(X_list, axis=0)
+    y = np.concatenate(y_list, axis=0)
+    
+    return X, y
