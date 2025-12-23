@@ -19,3 +19,14 @@ paths:
   val_path: ${hydra:runtime.cwd}/data/raw/numpy/val.npz
   test_path: ${hydra:runtime.cwd}/data/raw/numpy/test.npz
 
+features:
+  stft:
+    n_fft: 1024
+    win_length: 1024
+    hop_length: 256
+    window: hann
+    center: true
+  
+  settings:
+    stft_to_db: True
+    n_jobs: -1
