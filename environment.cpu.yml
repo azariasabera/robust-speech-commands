@@ -1,0 +1,45 @@
+# environment.cpu.yml
+
+name: robust-speech-commands-cpu
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+
+dependencies:
+  # Python
+  - python=3.10
+  - pip
+
+  # PyTorch (CPU only, minimal)
+  - pytorch=2.4
+  - cpuonly
+
+  # Audio / DSP
+  - numpy=1.26
+  - scipy=1.11
+  - librosa=0.10
+  - numba
+  - llvmlite
+
+  # Config
+  - hydra-core=1.3
+  - omegaconf
+
+  # Utilities
+  - pandas=2.2
+  - matplotlib>=3.7
+  - seaborn
+  - tqdm
+
+  # I/O
+  - ffmpeg
+  - pysoundfile  # conda variant of soundfile
+
+  - pip:
+      # TF + TFDS for dataset download
+      - tensorflow==2.15.0
+      - tensorflow-datasets==4.9.9
+
+      # Optional audio playback
+      - sounddevice==0.5.3

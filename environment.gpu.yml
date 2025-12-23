@@ -1,0 +1,46 @@
+# environment.gpu.yml
+
+name: robust-speech-commands-gpu
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+
+dependencies:
+  # Python core
+  - python=3.10
+  - pip
+
+  # PyTorch (GPU)
+  - pytorch=2.4
+  - pytorch-cuda=12.1   # change to 11.8 if needed
+
+  # Audio / DSP
+  - numpy=1.26
+  - scipy=1.11
+  - librosa=0.10
+  - numba
+  - llvmlite
+
+  # Config
+  - hydra-core=1.3
+  - omegaconf
+
+  # Utilities
+  - pandas=2.2
+  - matplotlib>=3.7
+  - seaborn
+  - tqdm
+
+  # I/O
+  - ffmpeg
+  - pysoundfile
+
+  - pip:
+      # TensorFlow (CPU) + TFDS
+      - tensorflow==2.15.0
+      - tensorflow-datasets==4.9.9
+
+      # Mic I/O
+      - sounddevice==0.5.3
