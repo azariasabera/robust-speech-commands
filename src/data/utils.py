@@ -1,5 +1,24 @@
+# src/data/utils.py
+
 import tensorflow as tf
 from omegaconf import DictConfig
+from typing import Any
+
+def get_feature_param(config: DictConfig, feature: str, key: str, default: Any) -> Any:
+    """
+    Get a parameter from config.features.<feature> with a fallback default.
+
+    Args:
+        config: Hydra DictConfig object.
+        feature: Feature name (e.g., 'mfcc', 'mel')
+        key: Parameter name inside the feature
+        default: Value to return if key is missing
+
+    Returns:
+        The value from config.features[feature][key] or default
+    """
+
+    return config.get("features", {}).get(feature, {}).get(key, default)
 
 def pad_or_trim_tensor(audio: tf.Tensor, config: DictConfig) -> tf.Tensor:
     """
