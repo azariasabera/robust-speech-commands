@@ -26,7 +26,35 @@ features:
     hop_length: 256
     window: hann
     center: true
+
+  mel:
+    n_fft: 1024
+    win_length: 1024
+    hop_length: 256
+    n_mels: 64
+    window: hann
+    center: true
+    fmin: 0.0
+    fmax: 8000.0
+
+  mfcc:
+    n_fft: 1024
+    win_length: 1024
+    hop_length: 256
+    n_mels: 64
+    n_mfcc: 20
+    window: hann
+    center: true
+    fmin: 0.0
+    fmax: 8000.0
   
   settings:
     stft_to_db: True
+    mel_to_db: True
+    mfcc_include_deltas: True
     n_jobs: -1
+
+feature_to_extract: 
+  #- stft
+  #- mel # e.g. python main.py feature_to_extract=['mel']
+  - mfcc  
