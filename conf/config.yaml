@@ -11,3 +11,11 @@ dataset:
 audio:
   sr: 16000
   duration: 1 #sec
+
+batch_size: 64
+
+paths:
+  train_path: ${hydra:runtime.cwd}/data/raw/numpy/train.npz
+  val_path: ${hydra:runtime.cwd}/data/raw/numpy/val.npz
+  test_path: ${hydra:runtime.cwd}/data/raw/numpy/test.npz
+
