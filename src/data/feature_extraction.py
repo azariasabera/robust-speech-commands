@@ -8,7 +8,7 @@ from tqdm import tqdm
 from src.data.utils import get_feature_param
 from joblib import Parallel, delayed
 
-def extract_stft(waveforms: List[np.ndarray], config: DictConfig) -> np.ndarray:
+def _extract_stft(waveforms: List[np.ndarray], config: DictConfig) -> np.ndarray:
     """
     Extracts Short-Time Fourier Transform (STFT) features from a list of waveforms in parallel.
 
@@ -46,7 +46,7 @@ def extract_stft(waveforms: List[np.ndarray], config: DictConfig) -> np.ndarray:
 
     return np.array(stft_specs, dtype=np.float32)
 
-def extract_mel(waveforms: List[np.ndarray], config: DictConfig) -> np.ndarray:
+def _extract_mel(waveforms: List[np.ndarray], config: DictConfig) -> np.ndarray:
     """
     Extracts Mel-spectrogram features from a list of waveforms in parallel.
 
@@ -94,7 +94,7 @@ def extract_mel(waveforms: List[np.ndarray], config: DictConfig) -> np.ndarray:
     return np.array(mel_specs, dtype=np.float32)
 
 
-def extract_mfcc(waveforms: List[np.ndarray], config: DictConfig) -> np.ndarray:
+def _extract_mfcc(waveforms: List[np.ndarray], config: DictConfig) -> np.ndarray:
     """
     Extracts MFCC features (optionally with delta and delta-delta) from waveforms in parallel.
 
@@ -147,26 +147,27 @@ def extract_mfcc(waveforms: List[np.ndarray], config: DictConfig) -> np.ndarray:
     return np.array(mfcc_specs, dtype=np.float32)
 
 
-def extract_all_features(waveforms: List[np.ndarray], config: DictConfig) -> Dict[str, np.ndarray]:
+def extract_feature(waveforms: List[np.ndarray], config: DictConfig) -> Dict[str, np.ndarray]:
     """
-    Extracts STFT, Mel-spectrogram, and MFCC features from a list of waveforms in parallel.
+    Extracts audio features in parallel from a list of waveforms.
+    Only features listed in config.feature_to_extract are computed.
 
     Args:
         waveforms (List[np.ndarray]): List of 1D NumPy arrays containing audio signals.
         config (DictConfig): Configuration containing all feature extraction parameters.
+            - config.feature_to_extract: List of features to extract. Options: 'stft', 'mel', 'mfcc'.
 
     Returns:
-        Dict[str, np.ndarray]: Dictionary containing all features:
-            - "stft": STFT, shape (N, F, T)
-            - "mel": Mel-spectrogram, shape (N, n_mels, T)
-            - "mfcc": MFCC features, shape (N, F, T)
+        Dict[str, np.ndarray]: Dictionary containing the requested features.
     """
-    stft = extract_stft(waveforms, config)
-    mel = extract_mel(waveforms, config)
-    mfcc = extract_mfcc(waveforms, config)
+    selected = getattr(config, "feature_to_extract", ["mfcc"])
+    features = {}
 
-    return {
-        "stft": stft,
-        "mel": mel,
-        "mfcc": mfcc,
-    }
+    if "stft" in selected:
+        features["stft"] = _extract_stft(waveforms, config)
+    if "mel" in selected:
+        features["mel"] = _extract_mel(waveforms, config)
+    if "mfcc" in selected:
+        features["mfcc"] = _extract_mfcc(waveforms, config)
+
+    return features
