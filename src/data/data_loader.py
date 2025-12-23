@@ -22,6 +22,10 @@ def download_dataset(config: DictConfig) -> None:
                 - dataset.dataset_name (str)
                 - dataset.root_dir (str or Path)
     """
+    # Only download if explicitly enabled in config
+    if not config.get("dataset", {}).get("download", False):
+        return
+
     tfds.load(
         name=config.dataset.dataset_name,
         data_dir=config.dataset.root_dir,
@@ -70,8 +74,10 @@ def load_datasets( config: DictConfig) -> Tuple[tf.data.Dataset, tf.data.Dataset
     except (AssertionError): # tsds raises AssertionError
         raise RuntimeError(
             f"Dataset '{config.dataset.dataset_name}' was not found in "
-            f"{config.dataset.root_dir}. "
-            "Please run the dataset download step first!"
+            f"{config.dataset.root_dir}.\n"
+            "Please run:\n"
+            "   >> python main.py dataset.download=true\n"
+            "to download and prepare the dataset."
         ) from None
 
 def get_class_labels(ds_info: tfds.core.DatasetInfo) -> List[str]:

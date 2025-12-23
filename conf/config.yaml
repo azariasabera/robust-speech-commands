@@ -7,6 +7,7 @@ dataset:
   dataset_name: "speech_commands"
   root_dir: ${hydra:runtime.cwd}/data/raw
   class_names: ["down", "go", "left", "no", "off", "on", "right", "stop", "up", "yes", "_silence_", "_unknown_"]
+  download: false  # Set to true on first run to download the dataset
 
 audio:
   sr: 16000
@@ -49,9 +50,9 @@ features:
     fmax: 8000.0
   
   settings:
-    stft_to_db: True
-    mel_to_db: True
-    mfcc_include_deltas: True
+    stft_to_db: true
+    mel_to_db: true
+    mfcc_include_deltas: true
     n_jobs: -1
 
 feature_to_extract: 
