@@ -1,6 +1,6 @@
 # src/data/data_loader.py
 
-from typing import Tuple
+from typing import Tuple, List
 from omegaconf import DictConfig
 import tensorflow_datasets as tfds
 import tensorflow as tf
@@ -70,3 +70,20 @@ def load_datasets( config: DictConfig) -> Tuple[tf.data.Dataset, tf.data.Dataset
             f"{config.dataset.root_dir}. "
             "Please run the dataset download step first!"
         ) from None
+
+def get_class_labels(ds_info: tfds.core.DatasetInfo) -> List[str]:
+    """
+    Return the list of class labels for a TFDS dataset.
+
+    Args:
+        ds_info (tfds.core.DatasetInfo): Dataset metadata returned by `load_datasets`.
+
+    Returns:
+        List[str]: Ordered list of label names, where index corresponds to
+                   the integer label in supervised datasets.
+    
+    Example:
+        labels = get_class_labels(ds_info)
+        # labels[0] might be 'yes', labels[1] -> 'no', etc.
+    """
+    return ds_info.features["label"].names
