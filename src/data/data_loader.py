@@ -106,8 +106,21 @@ def dataset_to_numpy(ds: tf.data.Dataset, config: DictConfig) -> Tuple[np.ndarra
     """
     batch_size = getattr(config, "batch_size", 64) # default batch_size
 
-    ds = ds.map(lambda x, y: (pad_or_trim_tensor(x, config), y))
+    def _map(X, y):
+            X = pad_or_trim_tensor(audio=X, config=config)
+
+            # int16 -> float32 [-1.0, 1.0]
+            if X.dtype == tf.int16:
+                max_val = abs(np.iinfo(np.int16).min) # 32768 i.e., abs(-2^15)
+                X = tf.cast((X / max_val), tf.float32)
+            else:
+                X = tf.cast(X, tf.float32)
+                X = tf.clip_by_value(X, -1.0, 1.0)
+            return X, y
+
+    ds = ds.map(_map, num_parallel_calls=tf.data.AUTOTUNE)
     ds = ds.batch(batch_size)
+    ds = ds.prefetch(tf.data.AUTOTUNE) # Prepare next batch while the model is running
 
     X_list = []
     y_list = []
