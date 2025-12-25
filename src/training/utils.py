@@ -2,6 +2,7 @@
 
 from omegaconf import DictConfig
 from typing import Any, Optional
+import torch
 
 def get_training_param(
     config: DictConfig, 
@@ -28,3 +29,18 @@ def get_training_param(
         return training.get(param, {}).get(key, default)
 
     return training.get(key, default)
+
+def get_device(config: DictConfig) -> torch.device:
+    """
+    Determine the device to run the model on based on the config.
+
+    Args:
+        config: Hydra DictConfig object.
+
+    Returns:
+        torch.device: 'cuda' if available and auto-selected, else 'cpu'.
+    """
+    device = get_training_param(config=config, key="device", default="auto")
+    if device == "auto":
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return torch.device(device)
