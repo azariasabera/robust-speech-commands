@@ -8,6 +8,7 @@ dataset:
   root_dir: ${hydra:runtime.cwd}/data/raw
   class_names: ["down", "go", "left", "no", "off", "on", "right", "stop", "up", "yes", "_silence_", "_unknown_"]
   download: false  # Set to true on first run to download the dataset
+  num_classes: 12
 
 audio:
   sr: 16000
