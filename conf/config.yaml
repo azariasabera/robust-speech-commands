@@ -102,3 +102,9 @@ training:
   early_stopping:
     enabled: true
     patience: 10
+
+evaluation:
+  plotting:
+    enabled: true
+    dir: ${training.plotting.dir}
+    filename: confusion_matrix.png
