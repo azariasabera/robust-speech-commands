@@ -6,6 +6,8 @@ import torch
 from pathlib import Path
 import matplotlib.pyplot as plt
 from datetime import datetime
+import random
+import numpy as np
 
 def get_training_param(
     config: DictConfig, 
@@ -81,3 +83,19 @@ def plot_history(history: dict, config: DictConfig) -> None:
         plt.savefig(plot_pth)
 
     plt.show()
+
+def set_seed(config: DictConfig) -> None: 
+    """ Set seed for reproducibility for torch, numpy, and python.random. 
+    Args: 
+        config: Hydra DictConfig object. 
+    """ 
+    seed = get_training_param(config=config, key="seed", default=42) 
+    
+    random.seed(seed) 
+    np.random.seed(seed) 
+    torch.manual_seed(seed) 
+    torch.cuda.manual_seed_all(seed) 
+    
+    if get_training_param(config=config, key="deterministic", default=False): 
+        torch.backends.cudnn.deterministic = True 
+        torch.backends.cudnn.benchmark = False
