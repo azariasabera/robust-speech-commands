@@ -60,3 +60,16 @@ feature_to_extract:
   #- stft
   #- mel # e.g. python main.py feature_to_extract=['mel']
   - mfcc  
+
+cnn:
+  in_channels: 1
+  base_channels: 16
+  channel_multiplier: 2
+  dropout_p: 0.1
+  use_local_pool: true
+  use_global_pool: true
+  linear_hidden: 64
+  kernel_size: [3,3]
+  stride: [1,1]
+  padding: [1,1]
+  pool_size: [2,2]
