@@ -73,3 +73,32 @@ cnn:
   stride: [1,1]
   padding: [1,1]
   pool_size: [2,2]
+
+training:
+  epochs: 100
+  batch_size: 64
+  learning_rate: 1e-3
+  weight_decay: 1e-4
+  seed: 42
+  deterministic: False
+
+  device: auto   # auto | cpu | cuda
+
+  save:
+    enabled: true
+    dir: ${hydra:runtime.cwd}/model/checkpoints
+    save_best_only: true
+    monitor: val_loss   # val_loss | val_acc
+    filename: best_model.pt
+
+  plotting:
+    enabled: true
+    dir: ${hydra:runtime.cwd}/model/plots
+    filename: training_curves.png
+
+  logging:
+    print_every: 1
+
+  early_stopping:
+    enabled: true
+    patience: 10
