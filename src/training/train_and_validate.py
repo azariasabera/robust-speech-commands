@@ -113,6 +113,8 @@ def train(config: DictConfig, model: nn.Module, train_loader: torch.utils.data.D
     curr = datetime.now().strftime("%Y%m%d_%H%M%S") # To avoid overwrite (per training run)
     save_pth = save_dir / f"{Path(filename).stem}_{curr}{Path(filename).suffix}"
 
+    patience_counter = 0
+
     for epoch in range(get_training_param(config=config, key="epochs", default=100)):
         train_metrics = _train_one_epoch(model, train_loader, optimizer, criterion, device)
         val_metrics = _validate_one_epoch(model, val_loader, criterion, device)
@@ -136,7 +138,19 @@ def train(config: DictConfig, model: nn.Module, train_loader: torch.utils.data.D
 
         if improved:
             best_metric = monitor_value
+            patience_counter = 0
             if save:
                 torch.save(model.state_dict(), save_pth)
+        else:
+            patience_counter += 1
+
+        # Early stopping
+        if get_training_param(config=config, param="early_stopping", key="enabled", default=True):
+            if patience_counter >= get_training_param(config=config, param="early_stopping", key="patience", default=10):
+                print(
+                    f"Early stopping triggered at epoch {epoch+1} "
+                    f"(best {monitor}={best_metric:.4f})"
+                )
+                break
 
     return history
