@@ -6,6 +6,7 @@ import librosa
 import numpy as np
 from pathlib import Path
 import random
+from src.data.utils import get_feature_param
 
 def get_noise_param(config: DictConfig, param: Optional[str] = None, 
                     key: str = "", default: Any = None) -> Any:
@@ -107,3 +108,50 @@ def prepare_noise_for_test(
     selected = noise_segments[:test_size]
     
     return np.stack(selected, axis=0)
+
+def stft(y: np.ndarray, config: DictConfig) -> np.ndarray:
+    """
+    Compute STFT of a single waveform.
+
+    Args:
+        y: 1D waveform array of shape (T,)
+        config: Hydra config with STFT parameters
+
+    Returns:
+        Complex STFT matrix of shape (F, T_frames)
+    """
+    n_fft = int(get_feature_param(config=config, feature="stft", key="n_fft", default=1024))
+    hop  = int(get_feature_param(config=config, feature="stft", key="hop_length", default=256))
+    win  = int(get_feature_param(config=config, feature="stft", key="win_length", default=n_fft))
+    window = str(get_feature_param(config=config, feature="stft", key="window", default="hann"))
+    center = bool(get_feature_param(config=config, feature="stft", key="center", default=True))
+
+    return librosa.stft( y, n_fft=n_fft, hop_length=hop, win_length=win, 
+                        window=window, center=center, pad_mode="reflect")
+
+def istft(Y: np.ndarray, config: DictConfig, length: Optional[int] = None) -> np.ndarray:
+    """
+    Compute the inverse Short-Time Fourier Transform (iSTFT).
+
+    Args:
+        Y: Complex STFT matrix of shape (F, T_frames), where:
+           - F is the number of frequency bins
+           - T_frames is the number of time frames
+        config: Hydra DictConfig containing STFT parameters.
+        length: Optional target length of the reconstructed waveform.
+                If provided, the output is trimmed or zero-padded to
+                exactly this length.
+
+    Returns:
+        np.ndarray:
+            Reconstructed time-domain waveform as a 1D float32 array
+            of shape (T,).
+    """
+    n_fft = int(get_feature_param(config=config, feature="stft", key="n_fft", default=1024))
+    hop  = int(get_feature_param(config=config, feature="stft", key="hop_length", default=256))
+    win  = int(get_feature_param(config=config, feature="stft", key="win_length", default=n_fft))
+    window = str(get_feature_param(config=config, feature="stft", key="window", default="hann"))
+    center = bool(get_feature_param(config=config, feature="stft", key="center", default=True))
+
+    return librosa.istft(stft_matrix=Y, hop_length=hop, win_length=win, 
+                         window=window, center=center, length=length)
