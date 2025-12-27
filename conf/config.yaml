@@ -5,7 +5,7 @@ defaults:
 
 dataset:
   dataset_name: "speech_commands"
-  root_dir: ${hydra:runtime.cwd}/data/raw
+  root_dir: ${hydra:runtime.cwd}/data/speech
   class_names: ["down", "go", "left", "no", "off", "on", "right", "stop", "up", "yes", "_silence_", "_unknown_"]
   download: false  # Set to true on first run to download the dataset
   num_classes: 12
@@ -17,9 +17,9 @@ audio:
 batch_size: 64
 
 paths:
-  train_path: ${hydra:runtime.cwd}/data/raw/numpy/train.npz
-  val_path: ${hydra:runtime.cwd}/data/raw/numpy/val.npz
-  test_path: ${hydra:runtime.cwd}/data/raw/numpy/test.npz
+  train_path: ${hydra:runtime.cwd}/data/speech/numpy/train.npz
+  val_path: ${hydra:runtime.cwd}/data/speech/numpy/val.npz
+  test_path: ${hydra:runtime.cwd}/data/speech/numpy/test.npz
 
 features:
   stft:
