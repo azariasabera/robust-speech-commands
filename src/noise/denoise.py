@@ -1,5 +1,6 @@
 # src/noise/denoise.py
 
+from typing import Optional
 import numpy as np
 from omegaconf import DictConfig
 from src.noise.utils import get_noise_param, stft, istft
@@ -128,3 +129,54 @@ def _estimate_noise_psd_known_noise(
     N = stft(y=np.asarray(noise_wave, dtype=np.float32), config=config)
     N_psd = (np.abs(N)**2).mean(axis=1, keepdims=True) + eps       # (F, 1)
     return N_psd
+
+def wiener_filter( config: DictConfig, noisy_wave: np.ndarray,
+                  noise_wave: Optional[np.ndarray] = None) -> np.ndarray:
+    """
+    Apply Wiener filtering to denoise a single noisy waveform.
+
+    Noise PSD can be estimated blindly from the noisy signal or
+    provided explicitly.
+
+    Args:
+        config: Hydra DictConfig with noise and STFT parameters
+        noisy_wave: 1D noisy waveform (T,)
+        noise_wave: Optional clean noise waveform (T,) for estimating known noise PSD
+
+    Returns:
+        Denoised waveform of shape (T,)
+    """
+    eps = float(get_noise_param(config=config, key="epsilon", default=1e-8))
+    clip_out = bool(get_noise_param(config=config, key="clip", default=True))
+    noise_psd_method = str(get_noise_param(config=config, key="noise_psd_method", default="energy_vad"))
+
+    if noise_psd_method not in ["energy_vad", "min_stats"]:
+        noise_psd_method = "energy_vad"
+
+    y = np.asarray(noisy_wave, dtype=np.float32)
+    Y = stft(y=y, config=config)
+    P = np.abs(Y)**2  # (F, T)
+
+    # PSD estimation
+    if noise_wave is not None:
+        N_psd = _estimate_noise_psd_known_noise(noise_wave=noise_wave, config=config)   # (F, 1)
+    else:
+        if noise_psd_method == "energy_vad":
+            N_psd = _estimate_noise_psd_energy_vad(noisy_wave=y, config=config)
+        else:
+            N_psd = _estimate_noise_psd_min_stats(noisy_wave=y, config=config)
+
+    # Broadcast N_psd to (F, T)
+    N_psd_bt = np.broadcast_to(N_psd, P.shape)
+
+    # A-posteriori SNR and Wiener gain
+    snr_post = np.maximum(P - N_psd_bt, 0.0) / (N_psd_bt + eps)
+    G = snr_post / (1.0 + snr_post)
+
+    S_hat = G * Y
+    y_hat = istft(Y=S_hat, config=config, length=len(y)).astype(np.float32)
+
+    if clip_out:
+        y_hat = np.clip(y_hat, -1.0, 1.0)
+
+    return y_hat
