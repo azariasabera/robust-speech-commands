@@ -96,3 +96,35 @@ def _estimate_noise_psd_min_stats(
     P = np.abs(Y)**2
     N_psd = np.percentile(P, pctl, axis=1, keepdims=True) + eps   # (F, 1)
     return N_psd
+
+
+def _estimate_noise_psd_known_noise(
+    noise_wave: np.ndarray,
+    config: DictConfig,
+) -> np.ndarray:
+    """
+    Estimate the noise Power Spectral Density (PSD) using a known noise signal.
+
+    This method assumes that a clean noise-only waveform corresponding to
+    the mixture is available. The noise PSD is computed directly from the
+    STFT of this noise segment.
+
+    Procedure:
+        1. Compute the STFT of the noise-only waveform.
+        2. Compute the power spectrum |N|^2.
+        3. Average the power across time frames to obtain a per-frequency
+           noise PSD estimate.
+
+    Args:
+        noise_wave: 1D numpy array of shape (T,) containing a noise-only waveform.
+        config: Hydra DictConfig containing STFT and noise parameters.
+
+    Returns:
+        np.ndarray:
+            Estimated noise PSD of shape (F, 1), where F is the number of
+            frequency bins.
+    """
+    eps = float(get_noise_param(config, key="epsilon", default=1e-8))
+    N = stft(y=np.asarray(noise_wave, dtype=np.float32), config=config)
+    N_psd = (np.abs(N)**2).mean(axis=1, keepdims=True) + eps       # (F, 1)
+    return N_psd
