@@ -5,6 +5,7 @@ from typing import List, Optional, Any
 import librosa
 import numpy as np
 from pathlib import Path
+import random
 
 def get_noise_param(config: DictConfig, param: Optional[str] = None, 
                     key: str = "", default: Any = None) -> Any:
@@ -68,3 +69,41 @@ def load_and_trim_audio(config: DictConfig) -> List[np.ndarray]:
             all_segments.append(seg)
     
     return all_segments
+
+def prepare_noise_for_test(
+    config: DictConfig, 
+    noise_segments: List[np.ndarray], 
+    test_size: int
+) -> np.ndarray:
+    """
+    Shuffle and select exactly `test_size` 1-second noise segments
+    to match the test dataset.
+
+    Args:
+        config: Hydra DictConfig object containing noise settings.
+        noise_segments: List of preprocessed 1-second noise segments.
+        test_size: Number of noise samples needed (e.g., length of test set).
+
+    Returns:
+        numpy.ndarray: Array of shape (test_size, sr) with selected noise segments.
+    
+    Raises:
+        ValueError: If there are not enough noise segments for the requested test size.
+    """
+    shuffle: bool = get_noise_param(config=config, key="shuffle", default=True)
+    seed: int = get_noise_param(config=config, key="seed", default=42)
+
+    random.seed(seed)
+    np.random.seed(seed)
+    
+    if len(noise_segments) < test_size:
+        raise ValueError(
+            f"Not enough 1-sec noise segments ({len(noise_segments)}) for requested test size ({test_size})"
+        )
+    
+    if shuffle:
+        random.shuffle(noise_segments)
+    
+    selected = noise_segments[:test_size]
+    
+    return np.stack(selected, axis=0)
