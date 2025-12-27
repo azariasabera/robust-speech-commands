@@ -108,3 +108,29 @@ evaluation:
     enabled: true
     dir: ${training.plotting.dir}
     filename: confusion_matrix.png
+
+noise:
+  url: http://www.openslr.org/resources/17/musan.tar.gz
+  dir: ${hydra:runtime.cwd}/data/noise
+  shuffle: true
+  sr: ${audio.sr}
+  duration: ${audio.duration}
+  seed: ${training.seed}
+  snr: [0, 5, 10, 20] # in dB
+  epsilon: 1e-8
+  clip: true
+  
+  rms_threshold: 1e-4
+  apply_threshold: true
+  threshold_percentile: 20.0
+  hangover_frames: 0
+
+  # Min-statistics (blind PSD)
+  min_stats_percentile: 10.0
+
+  # Spectral subtraction tuning
+  alpha: 1.0
+  floor: 1e-10
+
+  # In case when noise data is not given (e.g., real-time speech command capture)
+  noise_psd_method: energy_vad # energy_vad or min_stats
