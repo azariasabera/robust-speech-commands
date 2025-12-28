@@ -147,5 +147,5 @@ realtime:
   default_model_path_cpu: ${hydra:runtime.cwd}/model/checkpoints/best_model_cpu.pt
   default_model_path_gpu: ${hydra:runtime.cwd}/model/checkpoints/best_model_gpu.pt
   use_filter: False              # Whether to apply a noise reduction filter before feature extraction
-  filter_type: weiner           # Type of filter to apply; options: 'weiner' | 'spectral_subtraction'
+  filter_type: wiener           # Type of filter to apply; options: 'wiener' | 'spectral_subtraction'
   selection: majority_vote      # Strategy to combine predictions from multiple hops; options: 'majority_vote' | 'max_average_confidence'

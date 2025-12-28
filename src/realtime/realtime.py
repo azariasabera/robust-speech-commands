@@ -35,11 +35,11 @@ def listen_and_detect(config: DictConfig, labels: List[str], model: Optional[tor
     hop_sec = get_realtime_param(config=config, key="hop_size", default=0.1)
     cooldown = get_realtime_param(config=config, key="cooldown_time", default=10)
     use_filter = get_realtime_param(config=config, key="use_filter", default=False)
-    filter_type = get_realtime_param(config=config, key="filter_type", default="weiner")
+    filter_type = get_realtime_param(config=config, key="filter_type", default="wiener")
     selection = get_realtime_param(config=config, key="selection", default="majority_vote")
 
-    if filter_type not in ["weiner", "spectral_subtraction"]:
-        filter_type = "weiner"
+    if filter_type not in ["wiener", "spectral_subtraction"]:
+        filter_type = "wiener"
     if selection not in ["majority_vote", "max_average_confidence"]:
         selection = "majority_vote"
 
@@ -83,7 +83,7 @@ def listen_and_detect(config: DictConfig, labels: List[str], model: Optional[tor
 
                 if use_filter:
                     audio_chunk = (
-                        wiener_filter(config=config, noisy_wave=audio_chunk, noise_wave=None) if filter_type=="weiner"
+                        wiener_filter(config=config, noisy_wave=audio_chunk, noise_wave=None) if filter_type=="wiener"
                         else spectral_subtraction(config=config, noisy_wave=audio_chunk, noise_wave=None)
                     )
 
