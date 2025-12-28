@@ -91,7 +91,7 @@ training:
     filename: best_model.pt
 
   plotting:
-    enabled: true
+    save: true
     dir: ${hydra:runtime.cwd}/model/plots
     filename: training_curves.png
 
@@ -104,7 +104,7 @@ training:
 
 evaluation:
   plotting:
-    enabled: true
+    save: true
     dir: ${training.plotting.dir}
     filename: confusion_matrix.png
 

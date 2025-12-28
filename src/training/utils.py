@@ -3,11 +3,13 @@
 from omegaconf import DictConfig
 from typing import Any, Optional
 import torch
+from torch.utils.data import TensorDataset, DataLoader
 from pathlib import Path
 import matplotlib.pyplot as plt
 from datetime import datetime
 import random
 import numpy as np
+
 
 def get_training_param(
     config: DictConfig, 
@@ -70,7 +72,7 @@ def plot_history(history: dict, config: DictConfig) -> None:
     axes[1].set_title("Accuracy")
     axes[1].legend()
 
-    if get_training_param(config=config, param="plotting", key="enabled", default=True):
+    if get_training_param(config=config, param="plotting", key="save", default=True):
         plot_dir = Path(get_training_param(
             config=config, param="plotting", key="dir", default=Path.cwd()/"saved_plot"
         ))
