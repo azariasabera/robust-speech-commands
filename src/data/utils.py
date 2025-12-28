@@ -4,6 +4,8 @@ import tensorflow as tf
 from omegaconf import DictConfig
 from typing import Any, Tuple
 import numpy as np
+from pathlib import Path
+import tensorflow_datasets as tfds
 
 def get_feature_param(config: DictConfig, feature: str, key: str, default: Any) -> Any:
     """
@@ -76,3 +78,23 @@ def cmvn_apply(Feat: np.ndarray, mean: np.ndarray, std: np.ndarray) -> np.ndarra
     """
     return (Feat - mean) / std
 
+def dataset_exists(config: DictConfig) -> bool:
+    """
+    Check whether the specified TFDS dataset has already been downloaded.
+
+    Looks in the configured 'root_dir' for the dataset folder corresponding to the
+    dataset name and version. Returns True if the folder exists and contains files,
+    indicating the dataset is ready for use.
+
+    Args:
+        config (DictConfig): Hydra configuration object containing:
+            - dataset.dataset_name: Name of the TFDS dataset.
+            - dataset.root_dir: Root directory where datasets are stored.
+
+    Returns:
+        bool: True if the dataset exists and is non-empty, False otherwise.
+    """
+    
+    builder = tfds.builder(config.dataset.dataset_name)
+    dataset_dir = Path(config.dataset.root_dir) / builder.name / str(builder.version)
+    return dataset_dir.exists() and any(dataset_dir.iterdir())  # folder is not empty
