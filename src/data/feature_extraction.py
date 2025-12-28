@@ -171,3 +171,56 @@ def extract_feature(waveforms: List[np.ndarray], config: DictConfig) -> Dict[str
         features["mfcc"] = _extract_mfcc(waveforms, config)
 
     return features
+
+def extract_mfcc_fast(
+    waveform: np.ndarray,
+    config: DictConfig,
+) -> np.ndarray:
+    """
+    Fast MFCC extraction for real-time inference.
+    Single waveform, no joblib, no tqdm.
+
+    Args:
+        waveform (np.ndarray): 1D audio array (samples,)
+        config (DictConfig): Configuration
+
+    Returns:
+        np.ndarray: MFCC features, shape (F, T)
+    """
+    assert isinstance(waveform, np.ndarray), "waveform must be np.ndarray"
+    assert waveform.ndim == 1, "waveform must be 1D"
+
+    # --- Params (cached once per call) ---
+    sr = int(config.get("audio", {}).get("sr", 16000))
+    n_fft = int(get_feature_param(config, "mfcc", "n_fft", 1024))
+    win_length = int(get_feature_param(config, "mfcc", "win_length", n_fft))
+    hop_length = int(get_feature_param(config, "mfcc", "hop_length", 256))
+    n_mels = int(get_feature_param(config, "mfcc", "n_mels", 64))
+    n_mfcc = int(get_feature_param(config, "mfcc", "n_mfcc", 20))
+    window = str(get_feature_param(config, "mfcc", "window", "hann"))
+    center = bool(get_feature_param(config, "mfcc", "center", True))
+    fmin = float(get_feature_param(config, "mfcc", "fmin", 0.0))
+    fmax = float(get_feature_param(config, "mfcc", "fmax", None))
+    include_deltas = bool(get_feature_param(config, "settings", "mfcc_include_deltas", True))
+
+    # --- MFCC ---
+    mfcc = librosa.feature.mfcc(
+        y=waveform,
+        sr=sr,
+        n_mfcc=n_mfcc,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        window=window,
+        center=center,
+        n_mels=n_mels,
+        fmin=fmin,
+        fmax=fmax,
+    ).astype(np.float32)
+
+    if include_deltas:
+        delta = librosa.feature.delta(mfcc, order=1).astype(np.float32)
+        delta2 = librosa.feature.delta(mfcc, order=2).astype(np.float32)
+        mfcc = np.concatenate([mfcc, delta, delta2], axis=0)
+
+    return mfcc
