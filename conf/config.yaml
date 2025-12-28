@@ -6,7 +6,6 @@ defaults:
 dataset:
   dataset_name: "speech_commands"
   root_dir: ${hydra:runtime.cwd}/data/speech
-  class_names: ["down", "go", "left", "no", "off", "on", "right", "stop", "up", "yes", "_silence_", "_unknown_"]
   download: false  # Set to true on first run to download the dataset
   num_classes: 12
 
@@ -134,3 +133,17 @@ noise:
 
   # In case when noise data is not given (e.g., real-time speech command capture)
   noise_psd_method: energy_vad # energy_vad or min_stats
+
+realtime: 
+  use_default: False # If a new trained model exists, should I use it or the default model
+  sr: ${audio.sr}
+  buffer_size: ${audio.duration} # we take 1 sec from the stream to check make final prediction  
+  cooldown_time: 10 # in seconds
+  hop_size: 0.1 # 100 ms (to extract mfcc and predict) e.g. if buffer is 1s and hop is 0.1s, then it means we make 10 predictions and take average/max of the predicted labels
+  default_mean_path: ${hydra:runtime.cwd}/data/mean_and_std/mean.npz
+  default_std_path: ${hydra:runtime.cwd}/data/mean_and_std/std.npz
+  default_model_path_cpu: ${hydra:runtime.cwd}/model/checkpoints/best_model_cpu.pt
+  default_model_path_gpu: ${hydra:runtime.cwd}/model/checkpoints/best_model_gpu.pt
+  use_filter: False              # Whether to apply a noise reduction filter before feature extraction
+  filter_type: weiner           # Type of filter to apply; options: 'weiner' | 'spectral_subtraction'
+  selection: majority_vote      # Strategy to combine predictions from multiple hops; options: 'majority_vote' | 'max_average_confidence'
