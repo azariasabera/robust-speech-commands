@@ -3,11 +3,13 @@
 from omegaconf import DictConfig
 from typing import Any, Optional
 import torch
+from torch.utils.data import TensorDataset, DataLoader
 from pathlib import Path
 import matplotlib.pyplot as plt
 from datetime import datetime
 import random
 import numpy as np
+
 
 def get_training_param(
     config: DictConfig, 
@@ -70,7 +72,7 @@ def plot_history(history: dict, config: DictConfig) -> None:
     axes[1].set_title("Accuracy")
     axes[1].legend()
 
-    if get_training_param(config=config, param="plotting", key="enabled", default=True):
+    if get_training_param(config=config, param="plotting", key="save", default=True):
         plot_dir = Path(get_training_param(
             config=config, param="plotting", key="dir", default=Path.cwd()/"saved_plot"
         ))
@@ -82,7 +84,8 @@ def plot_history(history: dict, config: DictConfig) -> None:
         plot_pth = plot_dir / f"{plot_pth.stem}_{curr}{plot_pth.suffix}"
         plt.savefig(plot_pth)
 
-    plt.show()
+    if get_training_param(config=config, param="plotting", key="show", default=True):
+        plt.show()
 
 def set_seed(config: DictConfig) -> None: 
     """ Set seed for reproducibility for torch, numpy, and python.random. 
@@ -99,3 +102,30 @@ def set_seed(config: DictConfig) -> None:
     if get_training_param(config=config, key="deterministic", default=False): 
         torch.backends.cudnn.deterministic = True 
         torch.backends.cudnn.benchmark = False
+
+def load_data(config: DictConfig, X: np.ndarray, y: np.ndarray) -> DataLoader:
+    """
+    Convert numpy arrays to a PyTorch DataLoader.
+
+    Args:
+        config: Hydra DictConfig object.
+        X: Input features, shape (N, H, W)
+        y: Class labels, shape (N,)
+
+    Returns:
+        DataLoader yielding batches of (X, y) tensors suitable for CNN training.
+    """
+    X_tensor = torch.from_numpy(X).float().unsqueeze(1)
+    y_tensor = torch.from_numpy(y).long()
+
+    dataset = TensorDataset(X_tensor, y_tensor)
+    batch_size = get_training_param(config=config, key="batch_size", default=64)
+
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=2,
+        pin_memory=True
+    )
+    return loader

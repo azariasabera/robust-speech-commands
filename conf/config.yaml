@@ -3,10 +3,16 @@
 defaults:
   - _self_
 
+pipeline:
+  - train
+  - evaluate_clean
+  - evaluate_noisy
+  - evaluate_denoised
+  - realtime # If realtime is uncommented and so is train, it will try to use the new trained else the default
+
 dataset:
   dataset_name: "speech_commands"
-  root_dir: ${hydra:runtime.cwd}/data/raw
-  class_names: ["down", "go", "left", "no", "off", "on", "right", "stop", "up", "yes", "_silence_", "_unknown_"]
+  root_dir: ${hydra:runtime.cwd}/data/speech
   download: false  # Set to true on first run to download the dataset
   num_classes: 12
 
@@ -17,9 +23,9 @@ audio:
 batch_size: 64
 
 paths:
-  train_path: ${hydra:runtime.cwd}/data/raw/numpy/train.npz
-  val_path: ${hydra:runtime.cwd}/data/raw/numpy/val.npz
-  test_path: ${hydra:runtime.cwd}/data/raw/numpy/test.npz
+  train_path: ${hydra:runtime.cwd}/data/speech/numpy/train.npz
+  val_path: ${hydra:runtime.cwd}/data/speech/numpy/val.npz
+  test_path: ${hydra:runtime.cwd}/data/speech/numpy/test.npz
 
 features:
   stft:
@@ -92,9 +98,10 @@ training:
     filename: best_model.pt
 
   plotting:
-    enabled: true
+    save: true
     dir: ${hydra:runtime.cwd}/model/plots
     filename: training_curves.png
+    show: true
 
   logging:
     print_every: 1
@@ -105,9 +112,10 @@ training:
 
 evaluation:
   plotting:
-    enabled: true
+    save: true
     dir: ${training.plotting.dir}
     filename: confusion_matrix.png
+    show: true
 
 noise:
   url: http://www.openslr.org/resources/17/musan.tar.gz
@@ -134,3 +142,17 @@ noise:
 
   # In case when noise data is not given (e.g., real-time speech command capture)
   noise_psd_method: energy_vad # energy_vad or min_stats
+
+realtime: 
+  use_default: False # If a new trained model exists, should I use it or the default model
+  sr: ${audio.sr}
+  buffer_size: ${audio.duration} # we take 1 sec from the stream to check make final prediction  
+  cooldown_time: 10 # in seconds
+  hop_size: 0.1 # 100 ms (to extract mfcc and predict) e.g. if buffer is 1s and hop is 0.1s, then it means we make 10 predictions and take average/max of the predicted labels
+  default_mean_path: ${hydra:runtime.cwd}/data/mean_and_std/mean.npz
+  default_std_path: ${hydra:runtime.cwd}/data/mean_and_std/std.npz
+  default_model_path_cpu: ${hydra:runtime.cwd}/model/checkpoints/best_model_cpu.pt
+  default_model_path_gpu: ${hydra:runtime.cwd}/model/checkpoints/best_model_gpu.pt
+  use_filter: False              # Whether to apply a noise reduction filter before feature extraction
+  filter_type: wiener           # Type of filter to apply; options: 'wiener' | 'spectral_subtraction'
+  selection: majority_vote      # Strategy to combine predictions from multiple hops; options: 'majority_vote' | 'max_average_confidence'

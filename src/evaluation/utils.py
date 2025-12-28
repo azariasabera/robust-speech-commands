@@ -47,7 +47,7 @@ def plot_confusion(config: DictConfig, y_true: torch.Tensor, y_pred: torch.Tenso
     plt.ylabel("True")
     plt.title("Confusion Matrix")
 
-    if get_eval_param(config=config, param="plotting", key="enabled", default=True):
+    if get_eval_param(config=config, param="plotting", key="save", default=True):
             
         save_dir = Path(get_eval_param(config=config, param="plotting", key="dir", default="plots"))
         save_dir.mkdir(parents=True, exist_ok=True)
@@ -58,4 +58,5 @@ def plot_confusion(config: DictConfig, y_true: torch.Tensor, y_pred: torch.Tenso
 
         plt.savefig(save_pth)
     
-    plt.show()
+    if get_eval_param(config=config, param="plotting", key="show", default=True):
+        plt.show()
