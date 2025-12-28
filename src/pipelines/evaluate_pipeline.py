@@ -16,6 +16,7 @@ from src.realtime.utils import load_realtime_model, load_cmvn
 from src.noise.utils import load_and_trim_audio, prepare_noise_for_test, musan_exists
 from src.noise.add_noise import add_noise_to_waveforms
 from src.noise.download_dataset import download_musan
+from src.noise.denoise import wiener_filter, spectral_subtraction
 
 
 def run_evaluate_clean(config: DictConfig, state: PipelineState) -> None:
@@ -97,3 +98,29 @@ def run_evaluate_noisy(config: DictConfig, state: PipelineState) -> PipelineStat
     state.noisy_wavs = noisy_wavs
     state.noise_segments = selected
     return state
+
+
+def run_evaluate_denoised(config: DictConfig, state: PipelineState) -> None:
+    """
+    Evaluate model on denoised noisy signals.
+    Requires noisy evaluation to be run first.
+    
+    Args:
+        config (DictConfig): Hydra configuration object.
+        state (PipelineState): Shared pipeline state containing the trained or
+            loaded model, CMVN statistics, labels, and clean test data.
+    """
+    if state.noisy_wavs is None or state.noise_segments is None:
+        raise RuntimeError("Denoised evaluation requires noisy evaluation first.")
+
+    for i, (snr, wav) in enumerate(state.noisy_wavs.items()):
+        den_wiener = wiener_filter(config, wav, state.noise_segments[i])
+        den_ss = spectral_subtraction(config, wav, state.noise_segments[i])
+
+        for name, den in [("wiener", den_wiener), ("ss", den_ss)]:
+            spec = extract_feature(den, config)["mfcc"]
+            spec = cmvn_apply(spec, state.mean, state.std)
+            loader = load_data(config, spec, state.y_test)
+
+            res = evaluate(config, state.model, loader, state.device)
+            print(f"{name} @ {snr}: {res}")
