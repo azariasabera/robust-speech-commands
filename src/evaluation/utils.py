@@ -58,4 +58,5 @@ def plot_confusion(config: DictConfig, y_true: torch.Tensor, y_pred: torch.Tenso
 
         plt.savefig(save_pth)
     
-    plt.show()
+    if get_eval_param(config=config, param="plotting", key="show", default=True):
+        plt.show()

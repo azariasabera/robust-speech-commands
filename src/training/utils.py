@@ -84,7 +84,8 @@ def plot_history(history: dict, config: DictConfig) -> None:
         plot_pth = plot_dir / f"{plot_pth.stem}_{curr}{plot_pth.suffix}"
         plt.savefig(plot_pth)
 
-    plt.show()
+    if get_training_param(config=config, param="plotting", key="show", default=True):
+        plt.show()
 
 def set_seed(config: DictConfig) -> None: 
     """ Set seed for reproducibility for torch, numpy, and python.random. 
