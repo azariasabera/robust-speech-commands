@@ -155,3 +155,35 @@ def istft(Y: np.ndarray, config: DictConfig, length: Optional[int] = None) -> np
 
     return librosa.istft(stft_matrix=Y, hop_length=hop, win_length=win, 
                          window=window, center=center, length=length)
+
+def musan_exists(config: DictConfig) -> bool:
+    """
+    Check if MUSAN noise dataset is already downloaded and extracted.
+
+    Args:
+        config: Hydra DictConfig.
+    
+    Returns True if:
+      - musan.tar.gz exists
+      - at least one file exists under musan/noise/free-sound/
+    """
+    root_dir = Path(
+            get_noise_param(config, key="dir", default=str(Path.cwd()/"data"/"noise"))
+        ).expanduser().resolve()
+    
+    tar_path = root_dir / "musan.tar.gz"
+    extracted_dir = root_dir / "musan" / "noise" / "free-sound"
+
+    # Check if tar exists
+    if not tar_path.exists():
+        return False
+
+    # Check if extracted files exist
+    if not extracted_dir.exists():
+        return False
+
+    # Check if there's at least one file in the free-sound directory
+    if not any(extracted_dir.iterdir()):
+        return False
+
+    return True
