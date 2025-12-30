@@ -1,37 +1,34 @@
 # src/pipelines/realtime_pipeline.py
 
 from omegaconf import DictConfig
-from src.pipelines.state import PipelineState
-from src.data.utils import dataset_exists
-from src.data.data_loader import download_dataset, load_datasets, get_class_labels
+from src.pipelines.state import PipelineState, ModelSource
 from src.realtime.realtime import listen_and_detect
-from src.realtime.utils import get_realtime_param
+from src.pipelines.utils import ensure_state
 
 
 def run_realtime(config: DictConfig, state: PipelineState) -> None:
     """
     Start realtime keyword spotting.
-    Uses trained model if available, otherwise loads defaults.
+
+    Uses the trained model and metadata from the current pipeline state
+    when available; otherwise falls back to loading defaults from disk.
 
     Args:
         config (DictConfig): Hydra configuration object.
         state (PipelineState): Shared pipeline state containing the trained or
             loaded model, CMVN statistics, labels, and clean test data.
     """
-    if not dataset_exists(config):
-        download_dataset(config)
+    state = ensure_state(config, state, realtime=True)
 
-    _, _, _, ds_info = load_datasets(config)
-    labels = get_class_labels(ds_info)
-
-    # If there is a new trained model and if 'use_default' param is False
-    if state.model is not None and not get_realtime_param(config, "use_default", False):
-        listen_and_detect(
-            config=config,
-            labels=labels,
-            model=state.model,
-            mean=state.mean,
-            std=state.std,
-        )
+    if state.model_source == ModelSource.TRAINED:
+        print("[Realtime] Using currently trained model and CMVN ...")
     else:
-        listen_and_detect(config=config, labels=labels)
+        print("[Realtime] Using preloaded model and CMVN from default checkpoints ...")
+
+    listen_and_detect(
+        config=config,
+        labels=state.labels,
+        model=state.model,
+        mean=state.mean,
+        std=state.std,
+    )
