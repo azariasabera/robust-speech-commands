@@ -4,8 +4,64 @@ from omegaconf import DictConfig
 from typing import Tuple
 import numpy as np
 import torch
+from src.pipelines.state import PipelineState, ModelSource
+from src.data.utils import dataset_exists
+from src.data.data_loader import (
+    download_dataset,
+    load_datasets,
+    get_class_labels,
+    dataset_to_numpy,
+)
 from src.training.utils import get_device
 from src.models.cnn import KeywordSpottingNet
+
+
+def ensure_state(config: DictConfig, state: PipelineState, realtime: bool=False) -> PipelineState:
+    """
+    Ensure that evaluation artifacts (model, CMVN, labels, test data)
+    are available in the pipeline state. This helper populates the shared 
+    PipelineState if they are not already present. Artifacts are loaded 
+    from disk using the configured default checkpoints and statistics.
+
+    Args:
+        config (DictConfig): Hydra configuration object.
+        state (PipelineState): Shared pipeline state to be populated if needed.
+        realtime (bool): Whether we are in realtime inference mode or not
+
+    Returns:
+        PipelineState: Updated pipeline state with all required evaluation
+        artifacts available.
+    """
+    # If already present, just return
+    if state.model is not None and state.mean is not None and state.std is not None:
+        return state
+
+    if not dataset_exists(config):
+        download_dataset(config)
+
+    _, _, ds_test, ds_info = load_datasets(config)
+    labels = get_class_labels(ds_info)
+    
+    # Load CMVN stats
+    mean, std = load_cmvn(config)
+
+    # Load model
+    model, device = load_model(config, num_classes=len(labels))
+
+    # Populate state
+    state.mean = mean
+    state.std = std
+    state.model = model
+    state.device = device
+    state.labels = labels
+    state.model_source = ModelSource.LOADED
+
+    if not realtime:
+        X_test, y_test = dataset_to_numpy(ds_test, config)
+        state.X_test = X_test
+        state.y_test = y_test
+
+    return state
 
 
 def load_cmvn(config: DictConfig) -> Tuple[np.ndarray, np.ndarray]:
