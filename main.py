@@ -28,14 +28,14 @@ def main(cfg: DictConfig):
             paths, model parameters, and runtime options.
     """
      
-    pipeline = cfg.get("pipeline", ["realtime"])
+    pipeline = list(cfg.get("pipeline", ["realtime"]))
     state = PipelineState()
 
     if "train" in pipeline:
         state = run_training(cfg, state)
 
     if "evaluate_clean" in pipeline:
-        run_evaluate_clean(cfg, state)
+        state = run_evaluate_clean(cfg, state)
 
     if "evaluate_noisy" in pipeline:
         state = run_evaluate_noisy(cfg, state)
