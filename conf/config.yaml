@@ -4,11 +4,11 @@ defaults:
   - _self_
 
 pipeline:
-  - train
-  - evaluate_clean
-  - evaluate_noisy
-  - evaluate_denoised
-  - realtime # If realtime is uncommented and so is train, it will try to use the new trained else the default
+  #- train
+  #- evaluate_clean
+  #- evaluate_noisy
+  #- evaluate_denoised
+  - realtime # By default running main.py will run realtime inference only
 
 dataset:
   dataset_name: "speech_commands"
