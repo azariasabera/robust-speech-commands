@@ -4,6 +4,18 @@ from dataclasses import dataclass
 from typing import Optional, Dict
 import numpy as np
 import torch
+from enum import Enum
+
+
+class ModelSource(str, Enum):
+    """
+    Source of the model used in the pipeline.
+
+    TRAINED: Model was produced by the training pipeline in the current run.
+    LOADED: Model was loaded from a pre-trained checkpoint on disk.
+    """
+    TRAINED = "trained"
+    LOADED = "loaded"
 
 @dataclass
 class PipelineState:
@@ -18,7 +30,6 @@ class PipelineState:
     This avoids reloading datasets, models, and statistics across pipeline
     while keeping pipeline dependencies explicit.
     """
-
     model: Optional[torch.nn.Module] = None
     device: Optional[torch.device] = None
     mean: Optional[np.ndarray] = None
@@ -32,3 +43,5 @@ class PipelineState:
     # noisy evaluation artifacts
     noisy_wavs: Optional[Dict[str, np.ndarray]] = None
     noise_segments: Optional[np.ndarray] = None
+
+    model_source: Optional[ModelSource] = None
