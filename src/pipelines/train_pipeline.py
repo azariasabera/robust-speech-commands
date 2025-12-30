@@ -2,7 +2,7 @@
 
 from omegaconf import DictConfig
 
-from src.pipelines.state import PipelineState
+from src.pipelines.state import PipelineState, ModelSource
 from src.data.utils import dataset_exists, cmvn_fit_train, cmvn_apply
 from src.data.data_loader import (
     download_dataset,
@@ -64,5 +64,6 @@ def run_training(config: DictConfig, state: PipelineState) -> PipelineState:
     state.labels = labels
     state.X_test = X_test
     state.y_test = y_test
+    state.model_source = ModelSource.TRAINED
 
     return state
