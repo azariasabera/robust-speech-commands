@@ -103,9 +103,6 @@ training:
     filename: training_curves.png
     show: true
 
-  logging:
-    print_every: 1
-
   early_stopping:
     enabled: true
     patience: 10
